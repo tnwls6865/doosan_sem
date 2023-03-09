@@ -1,3 +1,4 @@
+import argparse
 import cv2
 import os
 import numpy as np
@@ -15,14 +16,9 @@ from utils.accuracy import accuracy_check
 import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 
-def main():
+def main(args):
 
-    data_root_path = '/HDD/dataset/doosan/CM939W/'
-    image_path = '/HDD/dataset/doosan/CM939W/images/'
-    mask_path = '/HDD/dataset/doosan/CM939W/segmentation_images/'
-    model_path = '/HDD/tnwls/doosan/history/230302/CM939W/resnet18_4_32_3/saved_models'
-
-    with open(os.path.join(data_root_path, 'images_anno.txt'), 'rb') as f:
+    with open(os.path.join(args.data_root_path, 'images_anno.txt'), 'rb') as f:
         data_list = pickle.load(f)
 
     save_dir = os.path.join('/HDD/tnwls/doosan/history/230302/', 'CM939W/seg_result_anno/')
@@ -31,7 +27,7 @@ def main():
         os.makedirs(save_dir)
 
     model = smp.DeepLabV3('resnet18', encoder_depth=4, encoder_weights=None, in_channels=1,decoder_channels=32)
-    model.load_state_dict(torch.load(os.path.join(model_path, 'model_best.pt')))
+    model.load_state_dict(torch.load(os.path.join(args.model_path, 'model_best.pt')))
 
     model.cuda()
 
@@ -48,8 +44,8 @@ def main():
     for data in data_list:
         data = data.split(' ')[0]
 
-        img = Image.open(os.path.join(image_path, data))
-        msk = Image.open(os.path.join(mask_path, data))
+        img = Image.open(os.path.join(args.image_path, data))
+        msk = Image.open(os.path.join(args.mask_path, data))
         
         img = toTensor(img).cuda().unsqueeze(0)
         msk = toTensor(msk).cuda().unsqueeze(0)
@@ -102,4 +98,16 @@ def main():
     print('total_acc : ', total_acc/len(data_list))
     
 if __name__ == "__main__":
-    main()
+
+    parser = argparse.ArgumentParser(description='sem img inference')
+
+    parser.add_argument('--data_root_path', type=str, default='/HDD/dataset/doosan/CM939W/')
+    parser.add_argument('--image_path', type=str, default='/HDD/dataset/doosan/CM939W/images')
+    parser.add_argument('--mask_path', type=str, default='/HDD/dataset/doosan/CM939W/segmentation_images')
+    parser.add_argument('--save_dir', type=str, default='/HDD/tnwls/doosan/history/230302/CM939W/')
+    parser.add_argument('--model_path', type=str, default='/HDD/tnwls/doosan/history/230302/CM939W/resnet18_4_32_3/saved_models')
+
+    args = parser.parse_args()
+
+    main(args)
+

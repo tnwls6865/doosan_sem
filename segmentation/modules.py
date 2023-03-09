@@ -49,7 +49,7 @@ def train_model(i, model, data_train, fn_loss, optimizer):
         if (batch+1)%100 == 0:
             print('Epoch', str(i+1), 'Train loss:', total_loss/batch, "Train acc", total_acc/batch)
 
-    return total_loss
+    return total_loss, total_acc
 
 def get_loss_train(model, data_train, fn_loss):
     """

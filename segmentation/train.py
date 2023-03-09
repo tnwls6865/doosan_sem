@@ -22,7 +22,7 @@ def main(args):
     trainset = CustomDatasetTrain(args.image_path, args.mask_path)
     valset = CustomDatasetVal(args.image_path, args.mask_path) 
 
-    save_path = os.path.join(args.save_dir, args.model_name)
+    save_path = os.path.join(args.save_dir, args.exp_name)
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     parser.add_argument('--image_path', type=str, default='/HDD/dataset/doosan/CM939W/img_random')
     parser.add_argument('--mask_path', type=str, default='/HDD/dataset/doosan/CM939W/img_seg_random')
     parser.add_argument('--save_dir', type=str, default='/HDD/tnwls/doosan/history/230302/CM939W/')
-    parser.add_argument('--exp_name', type=str, default='resnet18_4_32_3')
+    parser.add_argument('--exp_name', type=str, default='resnet18_4_32_3_check')
     args = parser.parse_args()
 
     main(args)
