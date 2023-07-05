@@ -164,15 +164,11 @@ def main(args):
 
         if gamma_prime == 0:
             aspect_list.append(None)
-        else:
-            aspect_list.append(Aspect_ratio/gamma_prime)
-        if gamma_prime == 0:
             avg_width_list.append(None)
-        else:
-            avg_width_list.append(avg_width/gamma_prime)
-        if gamma_prime == 0:
             avg_cir_list.append(None)
         else:
+            aspect_list.append(Aspect_ratio/gamma_prime)
+            avg_width_list.append(avg_width/gamma_prime)
             avg_cir_list.append(avg_cir/gamma_prime)
 
     

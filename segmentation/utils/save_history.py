@@ -1,6 +1,10 @@
 import os
 import csv
+import numpy as np
 from tkinter.filedialog import SaveFileDialog
+from sklearn.preprocessing import MinMaxScaler
+from PIL import Image
+
 import torch
 
 
@@ -48,3 +52,43 @@ def save_models(model, path, epoch, flag=False):
     torch.save(model.state_dict(), path+"/model_epoch_{0}.pt".format(epoch))
     if flag:
         torch.save(model.state_dict(), path+"/model_best.pt")
+
+
+def save_prediction_image(result, im_name, epoch, save_dir="result_images", save_im=True):
+    """save images to save_path
+    Args:
+        stacked_img (numpy): stacked cropped images
+        save_folder_name (str): saving folder name
+    """
+
+    save_folder_name = os.path.join(save_dir, 'result_images')
+    
+    # minmax_scaler = MinMaxScaler()
+    # result = minmax_scaler.fit_transform(stacked_img[0].cpu())
+    # result[result < 0.5] = 0
+    # result[result >= 0.5] = 255
+
+    palette = [0,0,0, 255,255,255]
+    out = Image.fromarray(result.astype(np.uint8), mode='P')
+    out.putpalette(palette)
+    # organize images in every epoch
+    desired_path = save_folder_name + '/epoch_' + str(epoch) + '/'
+    # Create the path if it does not exist
+    if not os.path.exists(desired_path):
+        os.makedirs(desired_path)
+    # Save Image!
+    export_name = str(im_name[0])
+    out.save(desired_path + export_name)
+    return out
+
+
+def polarize(img):
+    ''' Polarize the value to zero and one
+    Args:
+        img (numpy): numpy array of image to be polarized
+    return:
+        img (numpy): numpy array only with zero and one
+    '''
+    img[img >= 0.5] = 1
+    img[img < 0.5] = 0
+    return img

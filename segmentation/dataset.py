@@ -52,9 +52,9 @@ class CustomDatasetTrain(Dataset):
         single_image_name = self.data_list[index]
         img_as_img = Image.open(os.path.join(self.image_path, single_image_name)).convert("L")
 
-        if randint(0,1):
-            rotater = T.RandomRotation(degrees=(0, 180))
-            img_as_img = rotater(img_as_img)
+        # if randint(0,1):
+        #     rotater = T.RandomRotation(degrees=(0, 180))
+        #     img_as_img = rotater(img_as_img)
         if randint(0,1):
             sharpness_adjuster = T.RandomAdjustSharpness(sharpness_factor=10)
             img_as_img = sharpness_adjuster(img_as_img)
@@ -213,12 +213,3 @@ class CustomDatasetVal(Dataset):
 
         return self.data_len
 
-
-if __name__ == "__main__":
-
-    SEM_train = CustomDatasetTrain(
-        '../data/train/images', '../data/train/masks')
-
-    SEM_val = CustomDatasetVal('../data/val/images', '../data/val/masks')
-
-    imag_1, msk = SEM_train.__getitem__(0)
