@@ -35,8 +35,6 @@ class CustomDatasetTrain(Dataset):
 
         # Calculate len
         self.data_len = len(self.data_list)
-        self.crop_size = 224
-        # calculate mean and stdev
 
     def __getitem__(self, index):
         """Get specific data corresponding to the index
@@ -128,13 +126,10 @@ class CustomDatasetVal(Dataset):
             mask_path = path where test masks are located
         '''
         # paths to all images and masks
-        # self.mask_arr = glob.glob(str(mask_path) + str("/*"))
-        # self.image_arr = glob.glob(str(image_path) + str("/*"))
         self.image_path = image_path
         self.mask_path = mask_path
         self.data_list = self.__read_data__()
         self.data_len = len(self.data_list)
-        self.crop_size = 224
 
     def __getitem__(self, index):
         """Get specific data corresponding to the index
