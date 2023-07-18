@@ -1,11 +1,9 @@
 import dill
 import pandas as pd
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from tqdm import tqdm
-
 import argparse
+
 parser = argparse.ArgumentParser()
         
 parser.add_argument('-data_dir', default="gasturbin_data.csv", help="data path")
@@ -16,14 +14,12 @@ parser.add_argument('-save_dir', default="data_all_features_add_image.csv", help
 
 opt = parser.parse_args()
 
-#################
-#### in792sx ####
-#################
-#in792sx_dir = r'/HDD/jungmin/doosan/in792sx_features.csv'
-in792xs = pd.read_csv(in792sx_dir, encoding='UTF-8', sep=',') 
-in792xs['id'] = in792xs['Name'].str[7:-14]
+
+## 1) in792sx 
+in792xs = pd.read_csv(opt.in792sx_dir, encoding='UTF-8', sep=',')  #in792sx_dir = r'/HDD/jungmin/doosan/in792sx_features.csv'
 
 # string preprocess
+in792xs['id'] = in792xs['Name'].str[7:-14]
 in792xs['id'] = in792xs['id'].replace('409','A0409',regex=True)
 in792xs['id'] = in792xs['id'].replace('410','A0410',regex=True)
 in792xs['id'] = in792xs['id'].replace('411','A0411',regex=True)
@@ -32,11 +28,9 @@ in792xs['id'] = in792xs['id'].replace('412','A0412',regex=True)
 in792xs = in792xs[['id','Name','gamma','gammaP','gammaP_distrib','gammaP_aspect','gammaP_width','gammaP_circle']]
 
 
-###########################
-#### in792sx_interrupt ####
-###########################
-#in792sx_interrupt_dir = r'/HDD/jungmin/doosan/interrupt_add/features_in792sx_interrupt.csv'
-interrupt = pd.read_csv(in792sx_interrupt_dir, encoding='UTF-8', sep=',')
+
+## 2) in792sx_interrupt
+interrupt = pd.read_csv(opt.in792sx_interrupt_dir, encoding='UTF-8', sep=',') #in792sx_interrupt_dir = r'/HDD/jungmin/doosan/interrupt_add/features_in792sx_interrupt.csv'
 
 # string preprocess
 interrupt['id'] = interrupt['Name'].str[:4]
@@ -54,61 +48,58 @@ interrupt['id'] = interrupt['id'].replace('7_5_','7_5', regex=True)
 interrupt = interrupt[['id','Name','gamma','gammaP','gammaP_distrib','gammaP_aspect','gammaP_width','gammaP_circle']]
 
 
-################
-#### cm939w ####
-################
-#cm939w_dir = r'/HDD/dataset/doosan/CM939W/features.csv'
-cm939w = pd.read_csv(cm939w_dir, encoding='UTF-8', sep=',', header=None)
-#cm939w.columns=['idx','Name','gamma','gammaP','gammaP_distrib','gammaP_aspect','gammaP_width','gammaP_circle']
 
+## 3) cm939w 
+cm939w = pd.read_csv(opt.cm939w_dir, encoding='UTF-8', sep=',', header=None) #cm939w_dir = r'/HDD/dataset/doosan/CM939W/features.csv'
+
+# string preprocess
 cm939w['id'] = cm939w[1].replace('.png','',regex=True)
 cm939w['id'] = cm939w['id'].replace('900_','',regex=True)
 cm939w['id'] = cm939w['id'].replace('950_','',regex=True)
 cm939w['id'] = cm939w['id'].replace('1000_','',regex=True)
 cm939w['id'] = cm939w['id'].replace('c','C',regex=True)
 cm939w['id'] = cm939w['id'].replace('_','-',regex=True)
-cm939w['id'] = cm939w['id'].replace(r"prediCtion-imaGes\\",'',regex=True)
 
 cm939w.columns = ['idx','Name','gamma','gammaP','gammaP_distrib','gammaP_aspect','gammaP_width','gammaP_circle','id']
 cm939w = cm939w[['id','Name','gamma','gammaP','gammaP_distrib','gammaP_aspect','gammaP_width','gammaP_circle']]
 
+#----------------------------------------------------------------------------------------------------------------------------------------------
 
-################
-#### merge #####
-################
+## merge 
 in792xs['file'] = 'in792xs'
 interrupt['file'] = 'interrupt'
 cm939w['file'] = 'cm939w'
+
 in792xs = in792xs[['file','id','Name','gamma','gammaP','gammaP_distrib','gammaP_aspect','gammaP_width','gammaP_circle']]
 interrupt = interrupt[['file','id','Name','gamma','gammaP','gammaP_distrib','gammaP_aspect','gammaP_width','gammaP_circle']]
 cm939w = cm939w[['file','id','Name','gamma','gammaP','gammaP_distrib','gammaP_aspect','gammaP_width','gammaP_circle']]
 
 features = pd.concat([in792xs, interrupt, cm939w], axis=0)
 
-# gasturbin data: original data
-#data_path = r'/home/jungmin/workspace/doosan/doosan_result/gasturbin_data.csv'
-df = pd.read_csv(data_dir, encoding='UTF-8', sep=',') #Integrated version of in792sx, interrupt, cm939 data
+# Integrated version of original gasutrbin data(w/ in792sx, interrupt, cm939w)
+df = pd.read_csv(opt.data_dir, encoding='UTF-8', sep=',') #data_path = r'/home/jungmin/workspace/doosan/doosan_result/gasturbin_data.csv'
 df = df[['file','test_id','temp_oc','stress_mpa','LMP','mean','lower','upper']]
 df.columns = ['file','id','temp_oc','stress_mpa','LMP','mean','lower','upper']
 
-all_features = pd.merge(df, features, on='id')
-all_features = all_features[['file_x','id','Name','stress_mpa','temp_oc','LMP','mean','upper','lower','gamma','gammaP','gammaP_distrib','gammaP_aspect','gammaP_width','gammaP_circle']]
-all_features.rename(columns={'file_x':'file'})
+info_features = pd.merge(df, features, on='id')
+info_features = info_features[['file_x','id','Name','stress_mpa','temp_oc','LMP','mean','upper','lower','gamma','gammaP','gammaP_distrib','gammaP_aspect','gammaP_width','gammaP_circle']]
+info_features.rename(columns={'file_x':'file'})
 
-##save_dir =r"/home/jungmin/workspace/doosan/data_all_feature.csv"
-#all_features.to_csv(save_dir, sep=',', index=False)
+#----------------------------------------------------------------------------------------------------------------------------------------------
 
+## embedding image features 
+## (To use it as an input feature of a transformer)
 
-##############################
-#### merge image features ####
-##############################
 '''
+(dimension)
 encoder_feature[0] : B, 1, 448, 640
 encoder_feature[1] : B, 64, 224, 320
 encoder_feautre[2] : B, 64, 112, 160
 encoder_feature[3] : B, 128, 56, 80
 encoder_feautre[4] : B, 256, 56, 80
-decoder_output     : B, 32, 56, 80
+decoder_output  : B, 32, 56, 80
+->
+image_feature : B, 1, 32
 '''
 
 class CNN_1(nn.Module):
@@ -171,7 +162,6 @@ class CNN_5(nn.Module):
     def __init__(self):
         super(CNN_5, self).__init__()
         self.conv1 = nn.Conv2d(in_channels=64, out_channels=32, kernel_size=16, stride=8)
-        #self.conv2 = nn.Conv2d(in_channels=80, out_channels=32, kernel_size=8, stride=4)
         self.emb = nn.Linear(217,1)
     def forward(self, x):
         x = x.permute(0,3,2,1)
@@ -196,13 +186,9 @@ class CNN_6(nn.Module):
         x = x.permute(1,0)
         return x
 
-'''
-torch.Size([1, 32])
-'''
 
 def feature_process(option, feature_num):
     data = dill.load(open(f'/home/jungmin/workspace/doosan/image_features_{option}_{feature_num}.pkl', 'rb'))
-    #print(len(data['feature_output']), len(data['image_name']))
 
     if feature_num == "f1" :
         cnn = CNN_1()
@@ -217,55 +203,48 @@ def feature_process(option, feature_num):
     elif feature_num == 'decoder_output':
         cnn = CNN_6()
     cnn.cuda()
-    #output = cnn(data['feature_output'][1])  # Input Size: (10, 1, 20, 20)
     processed = []
     for i in tqdm(range(0,len(data['feature_output']))):
         processed.append(cnn(data['feature_output'][i]).tolist())
     image_name = data['image_name']
     return processed, image_name    
 
-#-------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------------------------------------
 f1 = []
 f2 = []
 f3 = []
 f4 = []
 f5 = []
 f6 = []
-#-------------------------------------------------
 
-for option in ['in792sx', 'in792sx_interrupt', 'cm939w']:
-  f1, image_name = feature_process(option, "f1")
-  f2, _ = feature_process(option, "f2")
-  f3, _ = feature_process(option, "f3")
-  f4, _ = feature_process(option, "f4")
-  f5, _ = feature_process(option, "f5")
-  f6, _ = feature_process(option, "decoder_output")
+for data_opt in ['in792sx', 'in792sx_interrupt', 'cm939w']:
+  f1, image_name = feature_process(data_opt, "f1")
+  f2, _ = feature_process(data_opt, "f2")
+  f3, _ = feature_process(data_opt, "f3")
+  f4, _ = feature_process(data_opt, "f4")
+  f5, _ = feature_process(data_opt, "f5")
+  f6, _ = feature_process(data_opt, "decoder_output")
 
-  if option == "in792sx":
-    df_in792sx = pd.DataFrame([image_name, f1, f2, f3, f4, f5, f6]).T
-    df_in792sx.columns=['Name','image_feature_1','image_feature_2','image_feature_3','image_feature_4','image_feature_5','image_feature_6']
-    #in792sx.to_csv(f'/home/jungmin/workspace/doosan/image_feature_processed_{option}.csv',index=False,sep=',',encoding='utf-8')
-  elif option == "in792sx_interrupt":
-    df_interrupt = pd.DataFrame([image_name, f1, f2, f3, f4, f5, f6]).T
-    df_interrupt.columns=['Name','image_feature_1','image_feature_2','image_feature_3','image_feature_4','image_feature_5','image_feature_6']
-    #in792sx_interrupt.to_csv(f'/home/jungmin/workspace/doosan/image_feature_processed_{option}.csv',index=False,sep=',',encoding='utf-8')
-  elif optiont == "cm939w":
-    df_cm939w = pd.DataFrame([image_name, f1, f2, f3, f4, f5, f6]).T
-    df_cm939w.columns=['Name','image_feature_1','image_feature_2','image_feature_3','image_feature_4','image_feature_5','image_feature_6']
-    #cm939w.to_csv(f'/home/jungmin/workspace/doosan/image_feature_processed_{option}.csv',index=False,sep=',',encoding='utf-8')
+  if data_opt == "in792sx":
+    image_feature_in792sx = pd.DataFrame([image_name, f1, f2, f3, f4, f5, f6]).T
+    image_feature_in792sx.columns=['Name','image_feature_1','image_feature_2','image_feature_3','image_feature_4','image_feature_5','image_feature_6']
+  
+  elif data_opt == "in792sx_interrupt":
+    image_feature_interrupt = pd.DataFrame([image_name, f1, f2, f3, f4, f5, f6]).T
+    image_feature_interrupt.columns=['Name','image_feature_1','image_feature_2','image_feature_3','image_feature_4','image_feature_5','image_feature_6']
+  
+  elif data_opt == "cm939w":
+    image_feature_cm939w = pd.DataFrame([image_name, f1, f2, f3, f4, f5, f6]).T
+    image_feature_cm939w.columns=['Name','image_feature_1','image_feature_2','image_feature_3','image_feature_4','image_feature_5','image_feature_6']
 
+#----------------------------------------------------------------------------------------------------------------------------------------------
 
-###############################
-#### final data processing ####
-###############################
-
-result_interrupt = pd.merge(all_features, df_interrupt, on='Name')
-result_in792sx = pd.merge(all_features, df_in792sx, on='Name')
-result_cm939w = pd.merge(all_features, df_cm939w, on='Name')
+result_interrupt = pd.merge(info_features, image_feature_interrupt, on='Name')
+result_in792sx = pd.merge(info_features, image_feature_in792sx, on='Name')
+result_cm939w = pd.merge(info_features, image_feature_cm939w, on='Name')
 
 result = pd.concat([result_interrupt, result_in792sx, result_cm939w], axis=0)
 result = result.reset_index(drop=True)
 
-#save_dir = r'/home/jungmin/workspace/doosan/data_all_features_add_image.csv'
-result.to_csv(save_dir, index=False,sep=',',encoding='utf-8')
+result.to_csv(opt.save_dir, index=False,sep=',',encoding='utf-8')
 
