@@ -103,6 +103,15 @@ all_features.rename(columns={'file_x':'file'})
 ##############################
 #### merge image features ####
 ##############################
+'''
+encoder_feature[0] : B, 1, 448, 640
+encoder_feature[1] : B, 64, 224, 320
+encoder_feautre[2] : B, 64, 112, 160
+encoder_feature[3] : B, 128, 56, 80
+encoder_feautre[4] : B, 256, 56, 80
+decoder_output     : B, 32, 56, 80
+'''
+
 class CNN_1(nn.Module):
     def __init__(self):
         super(CNN_1, self).__init__()
