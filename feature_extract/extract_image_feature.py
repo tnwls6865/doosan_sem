@@ -11,7 +11,6 @@ from torch.autograd import Variable
 from torchvision.transforms import ToTensor
 
 import segmentation_models_pytorch as smp
-from utils.accuracy import accuracy_check
 import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 import argparse
