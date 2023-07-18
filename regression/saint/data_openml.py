@@ -47,17 +47,16 @@ def data_prep_openml(ds_id, seed, task, feature_num, datasplit=[.65, .15, .2]):
     np.random.seed(seed) 
     if ds_id == "doosan":
         dataset = pd.read_csv(r"/home/jungmin/workspace/doosan/data_all_features_add_image_0410.csv", encoding='UTF-8', sep=',') #IN792sx, interrupt, cm939w 합친 데이터
-       
+        
+        ## select independent variables
         #X = dataset[['stress_mpa','temp_oc', 'gamma','gammaP','gammaP_aspect','gammaP_width','gammaP_circle']]
         X = dataset[['temp_oc','stress_mpa']]
-        # X = dataset[['gamma','gammaP','gammaP_aspect','gammaP_width','gammaP_circle']]
         #categorical_indicator = [False,  False, False, False, False, False, False]
         categorical_indicator = [False, False]
-        #categorical_indicator = [False, False, False, False, False]
         #attribute_names = ['stress_mpa','temp_oc','gamma','gammaP','gammaP_aspect','gammaP_width','gammaP_circle']
         attribute_names = ['temp_oc','stress_mpa']
-        #attribute_names = ['gamma','gammaP','gammaP_aspect','gammaP_width','gammaP_circle']
 
+        ## for confidence interval
         y = dataset[['mean']]
         y_upper = dataset[['upper']]
         y_lower = dataset[['lower']]
@@ -98,13 +97,11 @@ def data_prep_openml(ds_id, seed, task, feature_num, datasplit=[.65, .15, .2]):
     
     cat_dims = []
     for col in categorical_columns:
-    #     X[col] = X[col].cat.add_categories("MissingValue")
         X[col] = X[col].fillna("MissingValue")
         l_enc = LabelEncoder() 
         X[col] = l_enc.fit_transform(X[col].values)
         cat_dims.append(len(l_enc.classes_))
     for col in cont_columns:
-    #     X[col].fillna("MissingValue",inplace=True)
         X.fillna(X.loc[train_indices, col].mean(), inplace=True)
     y = y.values
     if task != 'regression':
@@ -114,7 +111,8 @@ def data_prep_openml(ds_id, seed, task, feature_num, datasplit=[.65, .15, .2]):
     X_train, y_train = data_split(X,y,nan_mask,train_indices)
     X_valid, y_valid = data_split(X,y,nan_mask,valid_indices)
     X_test, y_test = data_split(X,y,nan_mask,test_indices)
-    
+
+    # select image feature
     if feature_num == "1":
         IF = dataset['image_feature_1'].apply(lambda x: torch.FloatTensor(json.loads(x)))
     elif feature_num == "2":
@@ -127,8 +125,6 @@ def data_prep_openml(ds_id, seed, task, feature_num, datasplit=[.65, .15, .2]):
         IF = dataset['image_feature_5'].apply(lambda x: torch.FloatTensor(json.loads(x)))
     elif feature_num == "6":
         IF = dataset['image_feature_6'].apply(lambda x: torch.FloatTensor(json.loads(x)))    
-    #IF = dataset['image_feature'].apply(lambda x: torch.FloatTensor(json.loads(x)))
-    
     
     IF_train = {'data': IF.values[train_indices]}#.reshape(-1, 1)} 
     IF_valid = {'data': IF.values[valid_indices]}#.reshape(-1, 1)} 
@@ -140,11 +136,10 @@ def data_prep_openml(ds_id, seed, task, feature_num, datasplit=[.65, .15, .2]):
     y_lower_train = {'data': y_lower.values[train_indices]}
     y_lower_valid = {'data': y_lower.values[valid_indices]}
     y_lower_test = {'data': y_lower.values[test_indices]}
-    
-    
+      
     train_mean, train_std = np.array(X_train['data'][:,con_idxs],dtype=np.float32).mean(0), np.array(X_train['data'][:,con_idxs],dtype=np.float32).std(0)
     train_std = np.where(train_std < 1e-6, 1e-6, train_std)
-    # import ipdb; ipdb.set_trace()
+
     return cat_dims, cat_idxs, con_idxs, X_train, y_train, X_valid, y_valid, X_test, y_test, train_mean, train_std, IF_train, IF_valid, IF_test, y_upper_train, y_upper_valid, y_upper_test, y_lower_train, y_lower_valid, y_lower_test
 
 

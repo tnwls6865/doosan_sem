@@ -18,9 +18,9 @@ import argparse
 
 parser = argparse.ArgumentParser()
 
-# "option" _원하는 데이터 설정
+# "option" _to set data
 parser.add_argument('-data_option', help="in792sx | in792sx_interrupt | cm939w")
-# "feature_num" _이미지 피쳐값 설정
+# "feature_num" _to set image features
 parser.add_argument('-feature_num', help="1 ~ 6")
 
 opt = parser.parse_args()
@@ -30,7 +30,7 @@ def main():
     option = opt.data_option
     feature_num = opt.feature_num
     
-    ## 데이터셋 위치 설정
+    ## data directory
     if option == 'in792sx' :   
         data_root_path = '/HDD/dataset/doosan/tmp/'    
         image_path = '/HDD/dataset/doosan/tmp/images/'
@@ -87,7 +87,7 @@ def main():
             output, features, tmp = model(img)
             decoder_output = tmp
             
-            ## feature 및 decoder_output 추출 후 저장
+            ## Extract and save feature(encoder) and decoder_output
             if feature_num == "1":
                 feature_output.append(features[0])
                 feature_name = "f1"
@@ -112,7 +112,7 @@ def main():
          'feature_output':feature_output,
            }
     
-    ## 결과 저장 위치 설정
+    ## save directory
     output_dir = f'/home/jungmin/workspace/doosan/image_features_{str(option)}_{str(feature_name)}.pkl'
     print('[Info] Dumping the image features to pickle file')
     dill.dump(data, open(output_dir, 'wb'))

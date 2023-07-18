@@ -6,16 +6,13 @@ from data_openml import data_prep_openml,task_dset_ids,DataSetCatCon
 import argparse
 from torch.utils.data import DataLoader
 import torch.optim as optim
-from utils import count_parameters, classification_scores, mean_sq_error
-from augmentations import embed_data_mask
-from augmentations import add_noise
+from utils import count_parameters, classification_scores, mean_sq_error, embed_data_mask
 from tqdm import tqdm
 import os
 import numpy as np
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--dset_id', default='doosan')
-#parser.add_argument('--vision_dset', action = 'store_true')
 parser.add_argument('--vision_dset', default="False")
 parser.add_argument('--task', default='regression', type=str,choices = ['binary','multiclass','regression'])
 parser.add_argument('--cont_embeddings', default='MLP', type=str,choices = ['MLP','Noemb','pos_singleMLP'])
@@ -39,9 +36,6 @@ parser.add_argument('--dset_seed', default= 5 , type=int)
 #parser.add_argument('--active_log', action = 'store_true')
 parser.add_argument('--active_log', type=str)
 
-#parser.add_argument('--pretrain', action = 'store_true')
-parser.add_argument('--pretrain', type=str)
-parser.add_argument('--pretrain_epochs', default=50, type=int)
 parser.add_argument('--pt_tasks', default=['contrastive','denoising'], type=str,nargs='*',choices = ['contrastive','contrastive_sim','denoising'])
 parser.add_argument('--pt_aug', default=[], type=str,nargs='*',choices = ['mixup','cutmix'])
 parser.add_argument('--pt_aug_lam', default=0.1, type=float)
@@ -79,21 +73,16 @@ os.makedirs(modelsave_path, exist_ok=True)
 
 if opt.active_log=='True':
     import wandb
-    if opt.pretrain=='True':
-        wandb.init(project="saint_v2_all", group =opt.run_name ,name = f'pretrain_{opt.task}_{str(opt.attentiontype)}_{str(opt.dset_id)}_{str(opt.set_seed)}')
+    if opt.task=='multiclass':
+        wandb.init(project="saint_v2_all_kamal", group =opt.run_name ,name = f'{opt.task}_{str(opt.attentiontype)}_{str(opt.dset_id)}_{str(opt.set_seed)}')
     else:
-        if opt.task=='multiclass':
-            wandb.init(project="saint_v2_all_kamal", group =opt.run_name ,name = f'{opt.task}_{str(opt.attentiontype)}_{str(opt.dset_id)}_{str(opt.set_seed)}')
-        else:
-            wandb.init(project="saint_v2_all", group =opt.run_name ,name = f'{opt.task}_{str(opt.attentiontype)}_{str(opt.dset_id)}_{str(opt.set_seed)}')
-   
-
+        wandb.init(project="saint_v2_all", group =opt.run_name ,name = f'{opt.task}_{str(opt.attentiontype)}_{str(opt.dset_id)}_{str(opt.set_seed)}')
 
 print('Downloading and processing the dataset, it might take some time.')
 cat_dims, cat_idxs, con_idxs, X_train, y_train, X_valid, y_valid, X_test, y_test, train_mean, train_std, IF_train, IF_valid, IF_test, y_upper_train, y_upper_valid, y_upper_test, y_lower_train, y_lower_valid, y_lower_test= data_prep_openml(opt.dset_id, opt.dset_seed,opt.task, opt.feature_num, datasplit=[.65, .15, .2])
 continuous_mean_std = np.array([train_mean,train_std]).astype(np.float32) 
 
-##### Setting some hyperparams based on inputs and dataset
+# Setting some hyperparams based on inputs and dataset
 _,nfeat = X_train['data'].shape
 if nfeat > 100:
     opt.embedding_size = min(8,opt.embedding_size)
@@ -157,13 +146,7 @@ else:
 
 model.to(device)
 
-
-if opt.pretrain=='True':
-    from pretraining import SAINT_pretrain
-    model = SAINT_pretrain(model, cat_idxs,X_train,y_train, continuous_mean_std, opt,device)
-
-## Choosing the optimizer
-
+# Choosing the optimizer
 if opt.optimizer == 'SGD':
     optimizer = optim.SGD(model.parameters(), lr=opt.lr,
                           momentum=0.9, weight_decay=5e-4)
@@ -189,8 +172,6 @@ ACC_best_test_r2 = -100000
 RMSLE_best_test_ratio = 0
 ACC_best_test_ratio = 0
 
-
-
 print('Training begins now.')
 #for epoch in tqdm(range(opt.epochs)):
 for epoch in range(opt.epochs):
@@ -201,7 +182,7 @@ for epoch in range(opt.epochs):
         # x_categ is the the categorical data, x_cont has continuous data, y_gts has ground truth ys. cat_mask is an array of ones same shape as x_categ and an additional column(corresponding to CLS token) set to 0s. con_mask is an array of ones same shape as x_cont. 
         x_categ, x_cont, y_gts, cat_mask, con_mask, image_feature = data[0].to(device), data[1].to(device),data[2].to(device),data[3].to(device),data[4].to(device), data[5].to(device)
 
-        # We are converting the data to embeddings in the next step
+        # convert the data to embeddings in the next step
         _ , x_categ_enc, x_cont_enc = embed_data_mask(x_categ, x_cont, cat_mask, con_mask,model,vision_dset) 
                   
         reps = model.transformer(x_categ_enc, x_cont_enc, image_feature)
@@ -218,12 +199,12 @@ for epoch in range(opt.epochs):
         if opt.optimizer == 'SGD':
             scheduler.step()
         running_loss += loss.item()
-    # print(running_loss)
+
     if opt.active_log=='True':
         wandb.log({'epoch': epoch ,'train_epoch_loss': running_loss, 
         'loss': loss.item()
         })
-    #if epoch%10==0:
+
     if epoch%1==0:
             model.eval()
             with torch.no_grad():
@@ -247,8 +228,6 @@ for epoch in range(opt.epochs):
                     else:
                         if accuracy > best_valid_accuracy:
                             best_valid_accuracy = accuracy
-                        # if auroc > best_valid_auroc:
-                        #     best_valid_auroc = auroc
                             best_test_auroc = test_auroc
                             best_test_accuracy = test_accuracy               
                             torch.save(model.state_dict(),'%s/bestmodel.pth' % (modelsave_path))
