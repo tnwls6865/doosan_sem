@@ -96,13 +96,11 @@ def data_prep_openml(ds_id, seed, task, feature_num, datasplit=[.65, .15, .2]):
     
     cat_dims = []
     for col in categorical_columns:
-    #     X[col] = X[col].cat.add_categories("MissingValue")
         X[col] = X[col].fillna("MissingValue")
         l_enc = LabelEncoder() 
         X[col] = l_enc.fit_transform(X[col].values)
         cat_dims.append(len(l_enc.classes_))
     for col in cont_columns:
-    #     X[col].fillna("MissingValue",inplace=True)
         X.fillna(X.loc[train_indices, col].mean(), inplace=True)
     y = y.values
     if task != 'regression':
@@ -137,11 +135,10 @@ def data_prep_openml(ds_id, seed, task, feature_num, datasplit=[.65, .15, .2]):
     y_lower_train = {'data': y_lower.values[train_indices]}
     y_lower_valid = {'data': y_lower.values[valid_indices]}
     y_lower_test = {'data': y_lower.values[test_indices]}
-    
-    
+      
     train_mean, train_std = np.array(X_train['data'][:,con_idxs],dtype=np.float32).mean(0), np.array(X_train['data'][:,con_idxs],dtype=np.float32).std(0)
     train_std = np.where(train_std < 1e-6, 1e-6, train_std)
-    # import ipdb; ipdb.set_trace()
+
     return cat_dims, cat_idxs, con_idxs, X_train, y_train, X_valid, y_valid, X_test, y_test, train_mean, train_std, IF_train, IF_valid, IF_test, y_upper_train, y_upper_valid, y_upper_test, y_lower_train, y_lower_valid, y_lower_test
 
 
