@@ -113,9 +113,10 @@ class RowColTransformer(nn.Module):
                     PreNorm(dim*nfeats, Residual(FeedForward(dim*nfeats, dropout = ff_dropout))),
                 ]))
 
-    def forward(self, x_cat, x_cont, image_feature, mask = None):
+    def forward(self, x, x_cont, image_feature, mask = None):
         if x_cont is not None:
-            x = torch.cat((x_cat,x_cont),dim=1)
+            # x: x_categorical
+            x = torch.cat((x,x_cont),dim=1)
             # to add image_feature
             x = torch.cat((x, image_feature), dim=1)
             #x = torch.add(x, image_feature) #성능저하
