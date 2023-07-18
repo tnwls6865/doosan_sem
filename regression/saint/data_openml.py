@@ -46,7 +46,7 @@ def data_prep_openml(ds_id, seed, task, feature_num, datasplit=[.65, .15, .2]):
     
     np.random.seed(seed) 
     if ds_id == "doosan":
-        dataset = pd.read_csv(r"/home/jungmin/workspace/doosan/data_all_features_add_image_0410.csv", encoding='UTF-8', sep=',') #IN792sx, interrupt, cm939w 합친 데이터
+        dataset = pd.read_csv(r"/home/jungmin/workspace/doosan/data_all_features_add_image_0410.csv", encoding='UTF-8', sep=',') # integrated version of IN792sx, interrupt, cm939w data
         
         ## select independent variables
         #X = dataset[['stress_mpa','temp_oc', 'gamma','gammaP','gammaP_aspect','gammaP_width','gammaP_circle']]
@@ -73,7 +73,6 @@ def data_prep_openml(ds_id, seed, task, feature_num, datasplit=[.65, .15, .2]):
         X.reset_index(drop=True, inplace=True)
         print(y.shape, X.shape)
     if ds_id in [42728,42705,42729,42571]:
-        # import ipdb; ipdb.set_trace()
         X, y = X[:50000], y[:50000]
         X.reset_index(drop=True, inplace=True)
     categorical_columns = X.columns[list(np.where(np.array(categorical_indicator)==True)[0])].tolist()
@@ -151,8 +150,8 @@ class DataSetCatCon(Dataset):
         X_mask =  X['mask'].copy()
         X = X['data'].copy()
         con_cols = list(set(np.arange(X.shape[1])) - set(cat_cols))
-        self.X1 = X[:,cat_cols].copy().astype(np.int64) #categorical columns
-        self.X2 = X[:,con_cols].copy().astype(np.float32) #numerical columns
+        self.X1 = X[:,cat_cols].copy().astype(np.int64)           #categorical columns
+        self.X2 = X[:,con_cols].copy().astype(np.float32)         #numerical columns
         self.X1_mask = X_mask[:,cat_cols].copy().astype(np.int64) #categorical columns
         self.X2_mask = X_mask[:,con_cols].copy().astype(np.int64) #numerical columns
         
