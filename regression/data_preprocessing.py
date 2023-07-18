@@ -68,7 +68,6 @@ cm939w['id'] = cm939w['id'].replace('1000_','',regex=True)
 cm939w['id'] = cm939w['id'].replace('c','C',regex=True)
 cm939w['id'] = cm939w['id'].replace('_','-',regex=True)
 cm939w['id'] = cm939w['id'].replace(r"prediCtion-imaGes\\",'',regex=True)
-# cm939w['Name'] = cm939w['Name'].replace(r"prediction-images\\",'',regex=True)
 
 cm939w.columns = ['idx','Name','gamma','gammaP','gammaP_distrib','gammaP_aspect','gammaP_width','gammaP_circle','id']
 cm939w = cm939w[['id','Name','gamma','gammaP','gammaP_distrib','gammaP_aspect','gammaP_width','gammaP_circle']]
@@ -86,9 +85,9 @@ cm939w = cm939w[['file','id','Name','gamma','gammaP','gammaP_distrib','gammaP_as
 
 features = pd.concat([in792xs, interrupt, cm939w], axis=0)
 
-# gasturbin data: 원본 시험정보 데이터
+# gasturbin data: original data
 #data_path = r'/home/jungmin/workspace/doosan/doosan_result/gasturbin_data.csv'
-df = pd.read_csv(data_dir, encoding='UTF-8', sep=',') #IN792sx, interrupt, cm939 통합 버전
+df = pd.read_csv(data_dir, encoding='UTF-8', sep=',') #Integrated version of in792sx, interrupt, cm939 data
 df = df[['file','test_id','temp_oc','stress_mpa','LMP','mean','lower','upper']]
 df.columns = ['file','id','temp_oc','stress_mpa','LMP','mean','lower','upper']
 
