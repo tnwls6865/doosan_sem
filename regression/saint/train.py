@@ -74,15 +74,10 @@ os.makedirs(modelsave_path, exist_ok=True)
 
 if opt.active_log=='True':
     import wandb
-    if opt.pretrain=='True':
-        wandb.init(project="saint_v2_all", group =opt.run_name ,name = f'pretrain_{opt.task}_{str(opt.attentiontype)}_{str(opt.dset_id)}_{str(opt.set_seed)}')
+    if opt.task=='multiclass':
+        wandb.init(project="saint_v2_all_kamal", group =opt.run_name ,name = f'{opt.task}_{str(opt.attentiontype)}_{str(opt.dset_id)}_{str(opt.set_seed)}')
     else:
-        if opt.task=='multiclass':
-            wandb.init(project="saint_v2_all_kamal", group =opt.run_name ,name = f'{opt.task}_{str(opt.attentiontype)}_{str(opt.dset_id)}_{str(opt.set_seed)}')
-        else:
-            wandb.init(project="saint_v2_all", group =opt.run_name ,name = f'{opt.task}_{str(opt.attentiontype)}_{str(opt.dset_id)}_{str(opt.set_seed)}')
-   
-
+        wandb.init(project="saint_v2_all", group =opt.run_name ,name = f'{opt.task}_{str(opt.attentiontype)}_{str(opt.dset_id)}_{str(opt.set_seed)}')
 
 print('Downloading and processing the dataset, it might take some time.')
 cat_dims, cat_idxs, con_idxs, X_train, y_train, X_valid, y_valid, X_test, y_test, train_mean, train_std, IF_train, IF_valid, IF_test, y_upper_train, y_upper_valid, y_upper_test, y_lower_train, y_lower_valid, y_lower_test= data_prep_openml(opt.dset_id, opt.dset_seed,opt.task, opt.feature_num, datasplit=[.65, .15, .2])
@@ -152,13 +147,7 @@ else:
 
 model.to(device)
 
-
-if opt.pretrain=='True':
-    from pretraining import SAINT_pretrain
-    model = SAINT_pretrain(model, cat_idxs,X_train,y_train, continuous_mean_std, opt,device)
-
-## Choosing the optimizer
-
+# Choosing the optimizer
 if opt.optimizer == 'SGD':
     optimizer = optim.SGD(model.parameters(), lr=opt.lr,
                           momentum=0.9, weight_decay=5e-4)
