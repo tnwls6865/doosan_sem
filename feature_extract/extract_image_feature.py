@@ -1,19 +1,10 @@
 import os
-import numpy as np
-import pickle
 import dill
-from PIL import Image
-from sklearn.preprocessing import MinMaxScaler
-
 import torch
-import torch.nn as nn
-from torch.autograd import Variable
-from torchvision.transforms import ToTensor
-
-import segmentation_models_pytorch as smp
-import matplotlib.pyplot as plt
-import torchvision.transforms as transforms
 import argparse
+from PIL import Image
+import torchvision.transforms as transforms
+import segmentation_models_pytorch as smp
 
 parser = argparse.ArgumentParser()
 
@@ -63,9 +54,6 @@ def main():
     model.cuda()
 
     ## Train
-    total_acc = 0
-    toTensor = ToTensor() 
-    minmax_scaler = MinMaxScaler()
     model.eval()
 
     image_name = []
@@ -83,10 +71,9 @@ def main():
         image_name.append(data)
 
         with torch.no_grad():
-            output, features, tmp = model(img)
-            decoder_output = tmp
+            _, features, decoder_output = model(img)
             
-            ## Extract and save feature(encoder) and decoder_output
+            ## Extract and save feature maps from encoder(->features) and decoder(->decoder_output)
             if feature_num == "1":
                 feature_output.append(features[0])
                 feature_name = "f1"
