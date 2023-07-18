@@ -93,10 +93,10 @@ class RowColTransformer(nn.Module):
         self.layers = nn.ModuleList([])
         self.mask_embed =  nn.Embedding(nfeats, dim)
         self.style = style
-        ############################
-        ## If you add an image feature, change the nfeats value
+        
+        ## If you add an image featurse, change the "nfeats" value
         nfeats=9                  
-        ############################
+        
         for _ in range(depth):
             if self.style == 'colrow':
                 self.layers.append(nn.ModuleList([
@@ -114,11 +114,12 @@ class RowColTransformer(nn.Module):
 
     def forward(self, x, x_cont, image_feature, mask = None):
         if x_cont is not None:
-            # x: x_categorical
+            # input x means x_categorical
             x = torch.cat((x,x_cont),dim=1)
-            # to add image_feature
+            # If you add an image features, "concat" them
+            # The method of adding instead of concat reduced the performance of the model
             x = torch.cat((x, image_feature), dim=1)
-            #x = torch.add(x, image_feature) #성능저하
+            #x = torch.add(x, image_feature)
         _, n, _ = x.shape
         if self.style == 'colrow':
             for attn1, ff1, attn2, ff2 in self.layers: 
@@ -227,16 +228,13 @@ class TabAttention(nn.Module):
         self.num_unique_categories = sum(categories)
 
         # create category embeddings table
-
         self.num_special_tokens = num_special_tokens
         self.total_tokens = self.num_unique_categories + num_special_tokens
 
         # for automatically offsetting unique category ids to the correct position in the categories embedding table
         categories_offset = F.pad(torch.tensor(list(categories)), (1, 0), value = num_special_tokens)
         categories_offset = categories_offset.cumsum(dim = -1)[:-1]
-        
         self.register_buffer('categories_offset', categories_offset)
-
 
         self.norm = nn.LayerNorm(num_continuous)
         self.num_continuous = num_continuous
