@@ -4,7 +4,6 @@ from torch import nn, einsum
 import numpy as np
 from einops import rearrange
 
-# helpers
 
 def exists(val):
     return val is not None
@@ -95,7 +94,7 @@ class RowColTransformer(nn.Module):
         self.mask_embed =  nn.Embedding(nfeats, dim)
         self.style = style
         ############################
-        # Image Feature 추가 시 수정#
+        ## If you add an image feature, change the nfeats value
         nfeats=9                  
         ############################
         for _ in range(depth):
