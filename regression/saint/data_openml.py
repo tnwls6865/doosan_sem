@@ -48,7 +48,7 @@ def data_prep_openml(ds_id, seed, task, feature_num, datasplit=[.65, .15, .2]):
     if ds_id == "doosan":
         dataset = pd.read_csv(r"/home/jungmin/workspace/doosan/data_all_features_add_image_0410.csv", encoding='UTF-8', sep=',') #IN792sx, interrupt, cm939w 합친 데이터
         
-        # select independent variables
+        ## select independent variables
         #X = dataset[['stress_mpa','temp_oc', 'gamma','gammaP','gammaP_aspect','gammaP_width','gammaP_circle']]
         X = dataset[['temp_oc','stress_mpa']]
         #categorical_indicator = [False,  False, False, False, False, False, False]
@@ -56,6 +56,7 @@ def data_prep_openml(ds_id, seed, task, feature_num, datasplit=[.65, .15, .2]):
         #attribute_names = ['stress_mpa','temp_oc','gamma','gammaP','gammaP_aspect','gammaP_width','gammaP_circle']
         attribute_names = ['temp_oc','stress_mpa']
 
+        ## for confidence interval
         y = dataset[['mean']]
         y_upper = dataset[['upper']]
         y_lower = dataset[['lower']]
