@@ -112,7 +112,6 @@ class CustomDatasetTrain(Dataset):
         name = 'train_random.txt'
 
         root_path = '/'.join(self.image_path.split('/')[:-1])
-        # print(root_path)
         with open(os.path.join(root_path, name), 'rb') as f:
             data_list = pickle.load(f)
        

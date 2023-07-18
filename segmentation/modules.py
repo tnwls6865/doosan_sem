@@ -46,7 +46,7 @@ def train_model(epoch, model, data_train, criterion, optimizer):
         b, h, w = masks.shape
         tmp_masks = (masks.clone().detach().view(b,1,h,w)).type(torch.float)
         
-        outputs = model(images)
+        outputs, encoder_features, decoder_output = model(images)
         
         loss = criterion(outputs, tmp_masks)
 
@@ -60,7 +60,6 @@ def train_model(epoch, model, data_train, criterion, optimizer):
         total_loss = total_loss + loss.cpu().item()
 
         if (batch+1) % 5 == 0:
-
             print('Epoch', str(epoch+1), 'Train loss:', loss.item(), "Train acc", acc)
 
     return total_loss/len(data_train), total_acc/len(data_train)
@@ -95,7 +94,7 @@ def validate_model(epoch, model, data_val, criterion, make_prediction=True, save
         
             b, h, w = mask.shape
             tmp_mask = (mask.clone().detach().view(b,1,h,w)).type(torch.float)
-            output = model(image)
+            output, _, _ = model(image)
     
             loss = criterion(output, tmp_mask)
             total_val_loss = total_val_loss + loss.cpu().item()
