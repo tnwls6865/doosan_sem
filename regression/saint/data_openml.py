@@ -47,16 +47,14 @@ def data_prep_openml(ds_id, seed, task, feature_num, datasplit=[.65, .15, .2]):
     np.random.seed(seed) 
     if ds_id == "doosan":
         dataset = pd.read_csv(r"/home/jungmin/workspace/doosan/data_all_features_add_image_0410.csv", encoding='UTF-8', sep=',') #IN792sx, interrupt, cm939w 합친 데이터
-       
+        
+        # select independent variables
         #X = dataset[['stress_mpa','temp_oc', 'gamma','gammaP','gammaP_aspect','gammaP_width','gammaP_circle']]
         X = dataset[['temp_oc','stress_mpa']]
-        # X = dataset[['gamma','gammaP','gammaP_aspect','gammaP_width','gammaP_circle']]
         #categorical_indicator = [False,  False, False, False, False, False, False]
         categorical_indicator = [False, False]
-        #categorical_indicator = [False, False, False, False, False]
         #attribute_names = ['stress_mpa','temp_oc','gamma','gammaP','gammaP_aspect','gammaP_width','gammaP_circle']
         attribute_names = ['temp_oc','stress_mpa']
-        #attribute_names = ['gamma','gammaP','gammaP_aspect','gammaP_width','gammaP_circle']
 
         y = dataset[['mean']]
         y_upper = dataset[['upper']]
@@ -114,7 +112,8 @@ def data_prep_openml(ds_id, seed, task, feature_num, datasplit=[.65, .15, .2]):
     X_train, y_train = data_split(X,y,nan_mask,train_indices)
     X_valid, y_valid = data_split(X,y,nan_mask,valid_indices)
     X_test, y_test = data_split(X,y,nan_mask,test_indices)
-    
+
+    # select image feature
     if feature_num == "1":
         IF = dataset['image_feature_1'].apply(lambda x: torch.FloatTensor(json.loads(x)))
     elif feature_num == "2":
@@ -127,8 +126,6 @@ def data_prep_openml(ds_id, seed, task, feature_num, datasplit=[.65, .15, .2]):
         IF = dataset['image_feature_5'].apply(lambda x: torch.FloatTensor(json.loads(x)))
     elif feature_num == "6":
         IF = dataset['image_feature_6'].apply(lambda x: torch.FloatTensor(json.loads(x)))    
-    #IF = dataset['image_feature'].apply(lambda x: torch.FloatTensor(json.loads(x)))
-    
     
     IF_train = {'data': IF.values[train_indices]}#.reshape(-1, 1)} 
     IF_valid = {'data': IF.values[valid_indices]}#.reshape(-1, 1)} 
