@@ -44,7 +44,7 @@ def main(args):
         img = toTensor(img).cuda().unsqueeze(0)
 
         with torch.no_grad():
-            output = model(img)
+            output, _, _ = model(img)
 
         result = output[0][0].cpu().numpy()
         result[result < 0.5] = 0

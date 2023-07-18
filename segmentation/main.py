@@ -12,7 +12,7 @@ from modules import train_model, validate_model
 from utils.save_history import export_history, save_models
 from utils.util import train_val_split_
 
-import segmentation_models_pytorch as smp
+import segmentation_models as smp
 
 
 def main(args):
@@ -53,7 +53,7 @@ def main(args):
 
     # Train
     best_val_acc = 0
-    print("Initializing Training!")
+    print("Initializing Training!") 
     for i in range(0, args.epochs):
         # # train the model
         train_loss, train_acc = train_model(i, model, SEM_train_load, fn_loss, optimizer)
@@ -78,14 +78,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='sem img segmenation')
 
     parser.add_argument('--data', type=str, default='CM939W', help=" IN792sx | IN792sx_inter | CM939W")
-    parser.add_argument('--data_root_path', type=str, default='/HDD/dataset/doosan/CM939W/')
-    parser.add_argument('--image_path', type=str, default='/HDD/dataset/doosan/CM939W/img_random')
-    parser.add_argument('--mask_path', type=str, default='/HDD/dataset/doosan/CM939W/img_seg_random')
-    parser.add_argument('--save_dir', type=str, default='/HDD/tnwls/doosan/history/230302/CM939W/')
+    parser.add_argument('--data_root_path', type=str, default='./data/CM939W/')
+    parser.add_argument('--image_path', type=str, default='./data/CM939W/img_random')
+    parser.add_argument('--mask_path', type=str, default='./data/CM939W/img_seg_random')
+    parser.add_argument('--save_dir', type=str, default='./data//history/230302/CM939W/')
     parser.add_argument('--exp_name', type=str, default='resnet18_4_32_3_check2')
     
     parser.add_argument('--batch_size', type=int, default=32)
-    parser.add_argument('--num_worker', type=int, default=4)
+    parser.add_argument('--num_worker', type=int, default=0)
     parser.add_argument('--lr', type=float, default=0.0001)
     parser.add_argument('--epochs', type=int, default=500)
     parser.add_argument('--ckpt_interval', type=int, default=2)
