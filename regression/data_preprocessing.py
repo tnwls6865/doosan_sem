@@ -197,6 +197,10 @@ class CNN_6(nn.Module):
         x = x.permute(1,0)
         return x
 
+'''
+torch.Size([1, 32])
+'''
+
 def feature_process(option, feature_num):
     data = dill.load(open(f'/home/jungmin/workspace/doosan/image_features_{option}_{feature_num}.pkl', 'rb'))
     #print(len(data['feature_output']), len(data['image_name']))
