@@ -180,8 +180,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='prediction features extraction')
 
-    parser.add_argument('--pred_path', type=str, default='./')
-    parser.add_argument('--save_apth', type=str, default='./')
+    parser.add_argument('--pred_path', type=str, default='../segmentation/data/IN792sx/gamma/seg_result/')
+    parser.add_argument('--save_path', type=str, default='./')
     
     args = parser.parse_args()
 

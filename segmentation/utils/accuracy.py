@@ -1,4 +1,4 @@
-#from post_processing import *
+
 import numpy as np
 from PIL import Image
 import glob as gl
@@ -45,13 +45,4 @@ def accuracy_check_for_batch(masks, predictions, batch_size):
 
 
 
-# Experimenting
-if __name__ == '__main__':
-    
-    predictions = 'result/*.png'
-    masks = '../data/val/masks/*.png'
-
-    result = accuracy_compare(predictions, masks)
-    print('Original Result :', result[0])
-    print('Postprocess result :', result[1])
     

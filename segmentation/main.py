@@ -11,7 +11,6 @@ from dataset import CustomDatasetTrain, CustomDatasetVal
 from modules import train_model, validate_model
 from utils.save_history import export_history, save_models
 from utils.util import train_val_split_
-
 import segmentation_models as smp
 
 
@@ -36,11 +35,11 @@ def main(args):
                                                shuffle=False)
 
     if args.data.lower() == 'in792sx' :   
-        model = smp.DeepLabV3('resnet34', encoder_depth=4, encoder_weights=None, in_channels=1,decoder_channels=32)
+        model = smp.DeepLabV3('resnet34', encoder_depth=4, encoder_weights=None, in_channels=1, decoder_channels=32)
     elif args.data.lower() == 'in792sx_inter' :
-        model = smp.DeepLabV3('resnet18', encoder_depth=4, encoder_weights=None, in_channels=1,decoder_channels=32)
+        model = smp.DeepLabV3('resnet18', encoder_depth=4, encoder_weights=None, in_channels=1, decoder_channels=32)
     elif args.data.lower() == 'cm939w':
-        model = smp.DeepLabV3('resnet18', encoder_depth=4, encoder_weights=None, in_channels=1,decoder_channels=32)
+        model = smp.DeepLabV3('resnet18', encoder_depth=4, encoder_weights=None, in_channels=1, decoder_channels=32)
 
     model.cuda()
 
@@ -81,7 +80,7 @@ if __name__ == "__main__":
     parser.add_argument('--data_root_path', type=str, default='./data/CM939W/')
     parser.add_argument('--image_path', type=str, default='./data/CM939W/img_random')
     parser.add_argument('--mask_path', type=str, default='./data/CM939W/img_seg_random')
-    parser.add_argument('--save_dir', type=str, default='./data//history/230302/CM939W/')
+    parser.add_argument('--save_dir', type=str, default='./data/history/230302/CM939W/')
     parser.add_argument('--exp_name', type=str, default='resnet18_4_32_3_check2')
     
     parser.add_argument('--batch_size', type=int, default=32)
