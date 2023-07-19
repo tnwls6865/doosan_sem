@@ -78,7 +78,7 @@ class RowColTransformer(nn.Module):
         self.style = style
         
         ## If you add an image featurse, change the "nfeats" value
-        nfeats=9                  
+        nfeats=4                 
         
         for _ in range(depth):
             if self.style == 'colrow':
@@ -214,7 +214,8 @@ class TabAttention(nn.Module):
         attn_dropout = 0.,
         ff_dropout = 0.,
         cont_embeddings = 'MLP',
-        attentiontype = 'col'
+        attentiontype = 'col',
+        y_dim = 1,
     ):
         super().__init__()
         assert all(map(lambda n: n > 0, categories)), 'number of each category must be positive'
@@ -278,7 +279,7 @@ class TabAttention(nn.Module):
         
         self.mlp = MLP(all_dimensions, act = mlp_act)
         self.embeds = nn.Embedding(self.total_tokens, self.dim) #.to(device)
-
+        self.mlpfory = simple_MLP([dim ,1000, y_dim])
 
     def forward(self, x_categ, x_cont,x_categ_enc,x_cont_enc):
         device = x_categ.device
