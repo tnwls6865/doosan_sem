@@ -33,7 +33,7 @@ def embed_data(x_categ, x_cont, model):
     return x_categ, x_categ_enc, x_cont_enc#, image_feature_enc
 
 
-def mean_sq_error(model, dloader, device, vision_dset):
+def mean_sq_error(model, dloader, device):
     model.eval()
     y_test = torch.empty(0).to(device)
     y_pred = torch.empty(0).to(device)
@@ -41,8 +41,8 @@ def mean_sq_error(model, dloader, device, vision_dset):
     y_test_lower = torch.empty(0).to(device)
     with torch.no_grad():
         for i, data in enumerate(dloader, 0):
-            x_categ, x_cont, y_gts, cat_mask, con_mask, image_feature, y_upper, y_lower = data[0].to(device), data[1].to(device),data[2].to(device),data[3].to(device),data[4].to(device), data[5].to(device), data[6].to(device), data[7].to(device)
-            _ , x_categ_enc, x_cont_enc = embed_data(x_categ, x_cont, cat_mask, con_mask,model,vision_dset)           
+            x_categ, x_cont, y_gts, image_feature, y_upper, y_lower = data[0].to(device), data[1].to(device),data[2].to(device),data[3].to(device),data[4].to(device), data[5].to(device)
+            _ , x_categ_enc, x_cont_enc = embed_data(x_categ, x_cont, model)           
             reps = model.transformer(x_categ_enc, x_cont_enc, image_feature)
             
             y_reps = reps[:,0,:]
