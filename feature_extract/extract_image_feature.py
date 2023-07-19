@@ -34,14 +34,9 @@ def main():
         image_path = '/HDD/jungmin/doosan/cm939_add/0324'
         model_path = '/HDD/tnwls/doosan/history/230324/CM939W/model_best.pt'
 
-    if option == 'in792sx' :   
-        with open(os.path.join('/HDD/jungmin/doosan', 'images.txt')) as f:
-            lines = f.readlines()
-        data_list = [line.rstrip('\n') for line in lines]
-    else:    
-        with open(os.path.join(data_root_path, 'images.txt')) as f:
-            lines = f.readlines()
-        data_list = [line.rstrip('\n') for line in lines]
+    with open(os.path.join(data_root_path, 'images.txt')) as f:
+        lines = f.readlines()
+    data_list = [line.rstrip('\n') for line in lines]
             
     if option == 'in792sx' :   
         model = smp.DeepLabV3('resnet34', encoder_depth=4, encoder_weights=None, in_channels=1,decoder_channels=32)
@@ -53,11 +48,10 @@ def main():
     model.load_state_dict(torch.load(os.path.join(model_path)))
     model.cuda()
 
-    ## Train
     model.eval()
 
     image_name = []
-    feature_output=[]
+    feature_map=[]
 
     transform = transforms.Compose([transforms.Resize((512,512)),
         transforms.ToTensor(),
@@ -75,27 +69,27 @@ def main():
             
             ## Extract and save feature maps from encoder(->features) and decoder(->decoder_output)
             if feature_num == "1":
-                feature_output.append(features[0])
+                feature_map.append(features[0])
                 feature_name = "f1"
             elif feature_num == "2":
-                feature_output.append(features[1])
+                feature_map.append(features[1])
                 feature_name = "f2"
             elif feature_num == "3":
-                feature_output.append(features[2])
+                feature_map.append(features[2])
                 feature_name = "f3"
             elif feature_num == "4":
-                feature_output.append(features[3])
+                feature_map.append(features[3])
                 feature_name = "f4"
             elif feature_num == "5":
-                feature_output.append(features[4])
+                feature_map.append(features[4])
                 feature_name = "f5"
             elif feature_num == "6":
-                feature_output.append(decoder_output)
+                feature_map.append(decoder_output)
                 feature_name = "decoder_output"
     
     data={
          'image_name' : image_name,
-         'feature_output':feature_output,
+         'feature_map':feature_map,
            }
     
     ## save directory
