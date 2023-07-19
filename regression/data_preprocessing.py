@@ -7,9 +7,9 @@ import argparse
 parser = argparse.ArgumentParser()
         
 parser.add_argument('-data_dir', default="gasturbin_data.csv", help="data path")
-parser.add_argument('-in792sx_dir', required=True, help="in792sx image feature data path")
-parser.add_argument('-in792sx_interrupt_dir', required=True, help="in792sx_interrupt image feature data path")
-parser.add_argument('-cm939w_dir', required=True, help="cm939w image feature data path")
+parser.add_argument('-in792sx_dir', required=True, help="in792sx property feature data path")
+parser.add_argument('-in792sx_interrupt_dir', required=True, help="in792sx_interrupt property feature data path")
+parser.add_argument('-cm939w_dir', required=True, help="cm939w property feature data path")
 parser.add_argument('-save_dir', default="data_all_features_add_image.csv", help="output save directory")
 
 opt = parser.parse_args()
@@ -74,14 +74,14 @@ in792xs = in792xs[['file','id','Name','gamma','gammaP','gammaP_distrib','gammaP_
 interrupt = interrupt[['file','id','Name','gamma','gammaP','gammaP_distrib','gammaP_aspect','gammaP_width','gammaP_circle']]
 cm939w = cm939w[['file','id','Name','gamma','gammaP','gammaP_distrib','gammaP_aspect','gammaP_width','gammaP_circle']]
 
-features = pd.concat([in792xs, interrupt, cm939w], axis=0)
+property_features = pd.concat([in792xs, interrupt, cm939w], axis=0)
 
 # Integrated version of original gasutrbin data(w/ in792sx, interrupt, cm939w)
 df = pd.read_csv(opt.data_dir, encoding='UTF-8', sep=',') #data_path = r'/home/jungmin/workspace/doosan/doosan_result/gasturbin_data.csv'
 df = df[['file','test_id','temp_oc','stress_mpa','LMP','mean','lower','upper']]
 df.columns = ['file','id','temp_oc','stress_mpa','LMP','mean','lower','upper']
 
-info_features = pd.merge(df, features, on='id')
+info_features = pd.merge(df, property_features, on='id')
 info_features = info_features[['file_x','id','Name','stress_mpa','temp_oc','LMP','mean','upper','lower','gamma','gammaP','gammaP_distrib','gammaP_aspect','gammaP_width','gammaP_circle']]
 info_features.rename(columns={'file_x':'file'})
 
@@ -204,8 +204,8 @@ def feature_process(option, feature_num):
         cnn = CNN_6()
     cnn.cuda()
     processed = []
-    for i in tqdm(range(0,len(data['feature_output']))):
-        processed.append(cnn(data['feature_output'][i]).tolist())
+    for i in tqdm(range(0,len(data['feature_map']))):
+        processed.append(cnn(data['feature_map'][i]).tolist())
     image_name = data['image_name']
     return processed, image_name    
 

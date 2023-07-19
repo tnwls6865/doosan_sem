@@ -1,27 +1,15 @@
 import torch
 import torch.nn.functional as F
 from torch import nn, einsum
-import numpy as np
 from einops import rearrange
 
 
-def exists(val):
-    return val is not None
-
-def default(val, d):
-    return val if exists(val) else d
-
-def ff_encodings(x,B):
-    x_proj = (2. * np.pi * x.unsqueeze(-1)) @ B.t()
-    return torch.cat([torch.sin(x_proj), torch.cos(x_proj)], dim=-1)
-
-# classes
+## classes
 
 class Residual(nn.Module):
     def __init__(self, fn):
         super().__init__()
         self.fn = fn
-
     def forward(self, x, **kwargs):
         return self.fn(x, **kwargs) + x
 
@@ -31,14 +19,13 @@ class PreNorm(nn.Module):
         #dim=7200
         self.norm = nn.LayerNorm(dim)
         self.fn = fn
-
     def forward(self, x, **kwargs):
         x_ = self.norm(x)
         _x = self.fn(x_, **kwargs)
         return _x
 
-# attention
 
+# glu(gated linear unit) & gelu
 class GEGLU(nn.Module):
     def forward(self, x):
         x, gates = x.chunk(2, dim = -1)
@@ -53,7 +40,6 @@ class FeedForward(nn.Module):
             nn.Dropout(dropout),
             nn.Linear(dim * mult, dim)
         )
-
     def forward(self, x, **kwargs):
         return self.net(x)
 
@@ -69,10 +55,8 @@ class Attention(nn.Module):
         inner_dim = dim_head * heads
         self.heads = heads
         self.scale = dim_head ** -0.5
-
         self.to_qkv = nn.Linear(dim, inner_dim * 3, bias = False)
         self.to_out = nn.Linear(inner_dim, dim)
-
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
@@ -91,11 +75,10 @@ class RowColTransformer(nn.Module):
         super().__init__()
         self.embeds = nn.Embedding(num_tokens, dim)
         self.layers = nn.ModuleList([])
-        self.mask_embed =  nn.Embedding(nfeats, dim)
         self.style = style
         
         ## If you add an image featurse, change the "nfeats" value
-        nfeats=9                  
+        nfeats=4                 
         
         for _ in range(depth):
             if self.style == 'colrow':
@@ -112,7 +95,7 @@ class RowColTransformer(nn.Module):
                     PreNorm(dim*nfeats, Residual(FeedForward(dim*nfeats, dropout = ff_dropout))),
                 ]))
 
-    def forward(self, x, x_cont, image_feature, mask = None):
+    def forward(self, x, x_cont, image_feature):
         if x_cont is not None:
             # input x means x_categorical
             x = torch.cat((x,x_cont),dim=1)
@@ -121,6 +104,23 @@ class RowColTransformer(nn.Module):
             x = torch.cat((x, image_feature), dim=1)
             #x = torch.add(x, image_feature)
         _, n, _ = x.shape
+        '''
+        [algorithm]
+        col -->
+        def self_attention (x ):
+            q, k, v = mm(W_q, x), mm(W_k, x) , mm(W_v, x) #x is bxnxd / q,k,v are bxnxd / mm is matrix multiplication
+            attn = softmax (mm(q, np.transpose(k, (0, 2, 1)))/ sqrt(d)) #bxnxn
+            out = mm(attn, v) # out is bxnxd
+            return out
+        
+        colrow -->
+        def intersample_attention (x ):
+            b, n, d = x.shape  #x is bxnxd
+            x = reshape (x, (1, b, n*d)) # reshape x to 1 xbx (n*d)
+            x = self_attention(x) # the output x is 1 xbx (n*d)
+            out = reshape(x, (b, n, d)) # out is bxnxd
+            return out
+        '''
         if self.style == 'colrow':
             for attn1, ff1, attn2, ff2 in self.layers: 
                 x = attn1(x)
@@ -138,12 +138,11 @@ class RowColTransformer(nn.Module):
         return x
 
 
-# transformer
+## transformer
 class Transformer(nn.Module):
     def __init__(self, num_tokens, dim, depth, heads, dim_head, attn_dropout, ff_dropout):
         super().__init__()
         self.layers = nn.ModuleList([])
-
 
         for _ in range(depth):
             self.layers.append(nn.ModuleList([
@@ -160,7 +159,7 @@ class Transformer(nn.Module):
         return x
     
 
-#mlp
+## mlp
 class MLP(nn.Module):
     def __init__(self, dims, act = None):
         super().__init__()
@@ -196,7 +195,7 @@ class simple_MLP(nn.Module):
         x = self.layers(x)
         return x
 
-# main class
+## main class
 
 class TabAttention(nn.Module):
     def __init__(
@@ -212,25 +211,22 @@ class TabAttention(nn.Module):
         mlp_hidden_mults = (4, 2),
         mlp_act = None,
         num_special_tokens = 1,
-        continuous_mean_std = None,
         attn_dropout = 0.,
         ff_dropout = 0.,
-        lastmlp_dropout = 0.,
         cont_embeddings = 'MLP',
-        scalingfactor = 10,
-        attentiontype = 'col'
+        attentiontype = 'col',
+        y_dim = 1,
     ):
         super().__init__()
         assert all(map(lambda n: n > 0, categories)), 'number of each category must be positive'
 
+        ## categorical variables
         # categories related calculations
         self.num_categories = len(categories)
         self.num_unique_categories = sum(categories)
-
         # create category embeddings table
         self.num_special_tokens = num_special_tokens
         self.total_tokens = self.num_unique_categories + num_special_tokens
-
         # for automatically offsetting unique category ids to the correct position in the categories embedding table
         categories_offset = F.pad(torch.tensor(list(categories)), (1, 0), value = num_special_tokens)
         categories_offset = categories_offset.cumsum(dim = -1)[:-1]
@@ -242,6 +238,8 @@ class TabAttention(nn.Module):
         self.cont_embeddings = cont_embeddings
         self.attentiontype = attentiontype
 
+        ## Each continuous variable goes through a different embedding
+        ## (# of continuous embedding functions = # of continuous variables)
         if self.cont_embeddings == 'MLP':
             self.simple_MLP = nn.ModuleList([simple_MLP([1,100,self.dim]) for _ in range(self.num_continuous)])
             input_size = (dim * self.num_categories)  + (dim * num_continuous)
@@ -281,18 +279,7 @@ class TabAttention(nn.Module):
         
         self.mlp = MLP(all_dimensions, act = mlp_act)
         self.embeds = nn.Embedding(self.total_tokens, self.dim) #.to(device)
-
-        cat_mask_offset = F.pad(torch.Tensor(self.num_categories).fill_(2).type(torch.int8), (1, 0), value = 0) 
-        cat_mask_offset = cat_mask_offset.cumsum(dim = -1)[:-1]
-
-        con_mask_offset = F.pad(torch.Tensor(self.num_continuous).fill_(2).type(torch.int8), (1, 0), value = 0) 
-        con_mask_offset = con_mask_offset.cumsum(dim = -1)[:-1]
-
-        self.register_buffer('cat_mask_offset', cat_mask_offset)
-        self.register_buffer('con_mask_offset', con_mask_offset)
-
-        self.mask_embeds_cat = nn.Embedding(self.num_categories*2, self.dim)
-        self.mask_embeds_cont = nn.Embedding(self.num_continuous*2, self.dim)
+        self.mlpfory = simple_MLP([dim ,1000, y_dim])
 
     def forward(self, x_categ, x_cont,x_categ_enc,x_cont_enc):
         device = x_categ.device
