@@ -6,10 +6,15 @@ import json
 import torch
 from torchvision import transforms
 
-def data_split(X,y,indices):
+def data_split(X,y,nan_mask,indices):
     x_d = {
-        'data': X.values[indices]
-    }        
+        'data': X.values[indices],
+        'mask': nan_mask.values[indices]
+    }
+    
+    if x_d['data'].shape != x_d['mask'].shape:
+        raise'Shape of data not same as that of nan mask!'
+        
     y_d = {
         'data': y[indices].reshape(-1, 1)
     } 
@@ -17,7 +22,7 @@ def data_split(X,y,indices):
 
 def data_prep_openml(feature_num, datasplit=[.65, .15, .2]):
     
-    dataset = pd.read_csv(r"/home/jungmin/workspace/doosan/data_all_features_add_image.csv", encoding='UTF-8', sep=',') # integrated version of IN792sx, interrupt, cm939w data
+    dataset = pd.read_csv(r"regression/data_all_features_add_image.csv", encoding='UTF-8', sep=',') # integrated version of IN792sx, interrupt, cm939w data
 
     ## select independent variables
     #X = dataset[['stress_mpa','temp_oc', 'gamma','gammaP','gammaP_aspect','gammaP_width','gammaP_circle']]
@@ -47,7 +52,8 @@ def data_prep_openml(feature_num, datasplit=[.65, .15, .2]):
     test_indices = X[X.Set=="test"].index
     X = X.drop(columns=['Set'])
     temp = X.fillna("MissingValue")
-    
+    nan_mask = temp.ne("MissingValue").astype(int)
+
     cat_dims = []
     for col in categorical_columns:
         X[col] = X[col].fillna("MissingValue")
@@ -60,9 +66,9 @@ def data_prep_openml(feature_num, datasplit=[.65, .15, .2]):
     y = y.values
 
     ## dependent variable split
-    X_train, y_train = data_split(X,y,train_indices)
-    X_valid, y_valid = data_split(X,y,valid_indices)
-    X_test, y_test = data_split(X,y,test_indices)
+    X_train, y_train = data_split(X,y,nan_mask,train_indices)
+    X_valid, y_valid = data_split(X,y,nan_mask,valid_indices)
+    X_test, y_test = data_split(X,y,nan_mask,test_indices)
 
     ## independent variable split
     y_upper_train = {'data': y_upper.values[train_indices]}
